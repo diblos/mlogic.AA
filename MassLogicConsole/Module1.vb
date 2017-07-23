@@ -28,20 +28,20 @@ Namespace MassLogicConsole
         Private Const serviceAccountIssuerName As String = "com.watchdox.system.0367.3855"
         Private Const tokenExpiresInMinutes As Integer = 5
 
-        'Shared?
         Private apiSession As ApiSession
         Private VolumeSerialNumber As String
         Private VolumeSerialNumberHex As String
         Private liReportFile As List(Of ReportFile)
         Private liGroups As List(Of String)
         Private liDomains As List(Of String)
-        Private Declare Function GetVolumeInformation Lib "kernel32.dll" (PathName As String, VolumeNameBuffer As StringBuilder, VolumeNameSize As UInteger, ByRef VolumeSerialNumber As UInteger, ByRef MaximumComponentLength As UInteger, ByRef FileSystemFlags As UInteger, FileSystemNameBuffer As StringBuilder, FileSystemNameSize As UInteger) As Long
-        'Shared?
-
+        'Private Declare Function GetVolumeInformation Lib "kernel32.dll" (PathName As String, VolumeNameBuffer As StringBuilder, VolumeNameSize As UInteger, ByRef VolumeSerialNumber As UInteger, ByRef MaximumComponentLength As UInteger, ByRef FileSystemFlags As UInteger, FileSystemNameBuffer As StringBuilder, FileSystemNameSize As UInteger) As Long
+        Private Declare Function GetVolumeInformation Lib "kernel32.dll" Alias _
+    "GetVolumeInformationA" (PathName As String, VolumeNameBuffer As StringBuilder, VolumeNameSize As UInteger, ByRef VolumeSerialNumber As UInteger, ByRef MaximumComponentLength As UInteger, ByRef FileSystemFlags As UInteger, FileSystemNameBuffer As StringBuilder, FileSystemNameSize As UInteger) As Long
+        'http://www.jasinskionline.com/windowsapi/ref/g/getvolumeinformation.html
 
         Sub Main()
             Console.WriteLine(Now.ToString(DateStr))
-
+            theMain(Nothing)
             HappyEnd() 'Wait input to end
         End Sub
 
