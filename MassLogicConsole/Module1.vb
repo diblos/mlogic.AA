@@ -41,20 +41,39 @@ Namespace MassLogicConsole
         Private Const tokenExpiresInMinutes As Integer = 5
 
         'Shared?
-        'Private apiSession As ApiSession
-        'Private VolumeSerialNumber As String
-        'Private VolumeSerialNumberHex As String
-        'Private liReportFile As List(Of ReportFile)
-        'Private liGroups As List(Of String)
-        'Private liDomains As List(Of String)
-        'Private Declare Function GetVolumeInformation Lib "kernel32.dll" (PathName As String, VolumeNameBuffer As StringBuilder, VolumeNameSize As UInteger, ByRef VolumeSerialNumber As UInteger, ByRef MaximumComponentLength As UInteger, ByRef FileSystemFlags As UInteger, FileSystemNameBuffer As StringBuilder, FileSystemNameSize As UInteger) As Long
+        Private apiSession As ApiSession
+        Private VolumeSerialNumber As String
+        Private VolumeSerialNumberHex As String
+        Private liReportFile As List(Of ReportFile)
+        Private liGroups As List(Of String)
+        Private liDomains As List(Of String)
+        Private Declare Function GetVolumeInformation Lib "kernel32.dll" (PathName As String, VolumeNameBuffer As StringBuilder, VolumeNameSize As UInteger, ByRef VolumeSerialNumber As UInteger, ByRef MaximumComponentLength As UInteger, ByRef FileSystemFlags As UInteger, FileSystemNameBuffer As StringBuilder, FileSystemNameSize As UInteger) As Long
         'Shared?
 
 
         Sub Main()
             Console.WriteLine(Now.ToString(DateStr))
+
             HappyEnd() 'Wait input to end
         End Sub
+
+        'Private Shared Sub Main(args As String())
+        '    Program.VolumeSerialNumber = Nothing
+        '    Program.VolumeSerialNumberHex = Nothing
+        '    Program.liReportFile = New List(Of ReportFile)()
+        '    Program.liGroups = New List(Of String)()
+        '    Program.liDomains = New List(Of String)()
+        '    Program.getVolumeSerialNumber()
+        '    Program.generateReportFiles("C:\Airbus\LPC-NG\report", "*.xml")
+        '    Program.parseReportFile()
+        '    Program.generateStringReportFile()
+        '    Dim text As String = Program.authenticateAndGetToken(Program.apiSession)
+        '    If text IsNot Nothing AndAlso text.Length <> 0 Then
+        '        For Each current As ReportFile In Program.liReportFile
+        '            Program.uploadReportFile(Program.apiSession, current, Program.liGroups, Program.liDomains)
+        '        Next
+        '    End If
+        'End Sub
 
         Sub HappyEnd()
             Dim r = Console.ReadLine()
