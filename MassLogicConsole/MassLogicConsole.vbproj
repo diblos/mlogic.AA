@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{C8E54012-F7C5-410B-AF85-1512FDDC43A5}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <StartupObject>MassLogicConsole.Module1</StartupObject>
+    <StartupObject>Sub Main</StartupObject>
     <RootNamespace>MassLogicConsole</RootNamespace>
     <AssemblyName>MassLogicConsole</AssemblyName>
     <FileAlignment>512</FileAlignment>
@@ -86,8 +86,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="ReportFile.vb" />
-    <Compile Include="UploadFilesClass.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">
