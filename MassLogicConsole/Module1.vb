@@ -1,4 +1,8 @@
 ﻿Imports BlackBerry.Workspaces
+Imports BlackBerry.Workspaces.Json
+Imports BlackBerry.Workspaces.Resource
+Imports BlackBerry.Workspaces.Enums
+
 Imports System
 Imports System.Collections.Generic
 Imports System.IO
@@ -9,7 +13,7 @@ Imports System.Security.Cryptography
 Imports System.Security.Cryptography.X509Certificates
 Imports System.Text
 Imports System.Xml
-
+Imports System.Data.OleDb 'For Excel
 
 Namespace MassLogicConsole
     Module Module1
@@ -25,8 +29,13 @@ Namespace MassLogicConsole
         Private Const certPassword As String = "masslogicshukor"
         Private Const workspaceServerUrl As String = "shukor.watchdox.com"
         Private Const userEmail As String = "msahmad82@gmail.com"
+        'Private Const userEmail As String = "rudi@masslogic.net"
         Private Const serviceAccountIssuerName As String = "com.watchdox.system.0367.3855"
         Private Const tokenExpiresInMinutes As Integer = 5
+
+        Private Const ExcelFilename As String = "text_excel.xlsx"
+        Private Const ExcelWorkspace As String = "Sheet1"
+
 
         Private apiSession As ApiSession
         Private VolumeSerialNumber As String
@@ -57,7 +66,15 @@ Namespace MassLogicConsole
             parseReportFile()
             generateStringReportFile()
 
+            'ReadExcel(ExcelFilename, ExcelWorkspace)
+            'Dim dt As DataTable = ReadExcelToTable(ExcelFilename)
+
             Dim text As String = authenticateAndGetToken(apiSession)
+
+            'GetWorkspace()
+            'GetFolder()
+            GetFile(workspaceRoomId)
+
             If text IsNot Nothing AndAlso text.Length <> 0 Then
                 For Each current As ReportFile In liReportFile
                     uploadReportFile(apiSession, current, liGroups, liDomains)
@@ -66,9 +83,49 @@ Namespace MassLogicConsole
         End Sub
 
         Sub HappyEnd()
+            Console.WriteLine("...")
             Dim r = Console.ReadLine()
             Console.WriteLine(r)
         End Sub
+
+        Private Sub ReadExcel(ByVal fn As String, ByVal ws As String)
+
+            'Dim fileName = String.Format("{0}\fileNameHere", Directory.GetCurrentDirectory())
+            Dim fileName = String.Format("{0}\" & fn, Directory.GetCurrentDirectory())
+            Dim connectionString = String.Format("Provider=Microsoft.Jet.OLEDB.4.0; data source={0}; Extended Properties=Excel 8.0;", fileName)
+
+            'Dim adapter = New OleDbDataAdapter("SELECT * FROM [workSheetNameHere$]", connectionString)
+            Dim adapter = New OleDbDataAdapter("SELECT * FROM [" & ws & "$]", connectionString)
+            Dim ds = New DataSet()
+
+            adapter.Fill(ds, "anyNameHere")
+
+            Dim data As DataTable = ds.Tables("anyNameHere")
+        End Sub
+
+        Private Function ReadExcelToTable(path As String) As DataTable
+
+            'CONNECTION STRING
+            Dim connstring As String = (Convert.ToString("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=") & path) + ";Extended Properties='Excel 8.0;HDR=NO;IMEX=1';"
+            'THE SAME NAME 
+            'Dim connstring As String = (Convert.ToString("Provider=Microsoft.JET.OLEDB.4.0;Data Source=") & path) + ";Extended Properties='Excel 8.0;HDR=NO;IMEX=1';"
+
+            Using conn As New OleDbConnection(connstring)
+                conn.Open()
+                'Get All Sheets Name
+                Dim sheetsName As DataTable = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, New Object() {Nothing, Nothing, Nothing, "Table"})
+
+                'Get the First Sheet Name
+                Dim firstSheetName As String = sheetsName.Rows(0)(2).ToString()
+
+                'Query String 
+                Dim sql As String = String.Format("SELECT * FROM [{0}]", firstSheetName)
+                Dim ada As New OleDbDataAdapter(sql, connstring)
+                Dim [set] As New DataSet()
+                ada.Fill([set])
+                Return [set].Tables(0)
+            End Using
+        End Function
 
         Private Sub getVolumeSerialNumber()
             Dim num As UInteger = 0UI
@@ -178,7 +235,8 @@ Namespace MassLogicConsole
             expr_0F.Write(reportFile.WatchdoxFileContent)
             expr_0F.Close()
             Dim UFC As UploadFilesClass = New UploadFilesClass(apiSession)
-            UFC.UploadDocumentToRoom(workspaceRoomId, reportFile.getDstFilename(), text, VolumeSerialNumberHex, liGroups, liDomains)
+            'UFC.UploadDocumentToRoom(workspaceRoomId, reportFile.getDstFilename(), text, VolumeSerialNumberHex, liGroups, liDomains)
+            UFC.UploadDocumentToRoom(workspaceRoomId, "test.txt", text, VolumeSerialNumberHex, liGroups, liDomains)
 
             Try
                 File.Delete(text)
@@ -204,6 +262,119 @@ Namespace MassLogicConsole
             End While
             Return stringBuilder.ToString()
         End Function
+
+        '//////////////////////////////////////////////////////////////////////
+
+        Private Sub GetWorkspace()
+            Dim workspaces As Resource.Workspaces = apiSession.GetWorkspacesResource()
+            ' This returns a list of rooms, which can be iterated over. The other parameters            
+            ' include: addExternalData, adminMode, includeSyncData, includeWorkspacePolicyData,            
+            ' and workspaceTypes. Please see the javadoc documentation for details.
+            Dim itemListJson As ItemListJson(Of WorkspaceInfoJson) = workspaces.ListRoomsV30(Nothing, True, True, False, False)
+        End Sub
+
+        Private Sub GetFolder()
+            'Resource.Workspaces workspaces = apiSession.GetWorkspacesResource();
+            Dim workspaces As Resource.Workspaces = apiSession.GetWorkspacesResource()
+            ' This returns a folder object, which contains details about the current workspace,            
+            ' as well as a sub folder list that can be iterated over.            
+            'FolderJson folderJson = workspaces.GetFolderTreeV30(roomId);
+            Dim folderJson As FolderJson = workspaces.GetFolderTreeV30(workspaceRoomId)
+            'List<FolderJson> subFolders = folderJson.SubFolders
+            Dim subFolders As List(Of FolderJson) = folderJson.SubFolders
+        End Sub
+
+        Private Sub GetActivity(ByVal documentGuid As String)
+
+
+            Dim files As Files = apiSession.GetFilesResource()
+            ' Create an object to specify the documents activityLog request            
+            ' The guid of a document to retrieve activity for                
+            ' Indicates if only the last action for a user should be retrieved                
+            ' Indicates the page number to fetch of a multipage response                
+            ' The number of items to fetch per page    
+
+            'Dim getDocumentActivityLogRequestJson As New GetDocumentActivityLogRequestJson() With { _
+            '	Key .DocumentGuid = documentGuid, _
+            '	Key .LastActionPerUser = False, _
+            '	Key .PageNumber = 1, _
+            '	Key .PageSize = 100 _
+            '}
+
+            Dim getDocumentActivityLogRequestJson As New GetDocumentActivityLogRequestJson()
+            With getDocumentActivityLogRequestJson
+                .DocumentGuid = documentGuid
+                .LastActionPerUser = False
+                .PageNumber = 1
+                .PageSize = 100
+            End With
+
+            ' Call the get activity method            
+            Dim result As PagingItemListJson(Of ActivityLogRecordJson) = files.GetActivityLogV30(getDocumentActivityLogRequestJson)
+
+        End Sub
+
+        Private Sub Add2Group(ByVal userAddresses As List(Of String), ByVal groupName As String)
+            Dim workspaces As Resource.Workspaces = apiSession.GetWorkspacesResource()
+            Dim memberList As New List(Of AddMemberToGroupJson)()
+
+            For Each currentAddress As String In userAddresses
+                Dim currentEntity As New PermittedEntityFromUserJson()
+                With currentEntity
+                    .Address = currentAddress
+                    .EntityType = EntityType.USER
+                End With
+                'make a AddMemberToGroupJson for each user                
+                Dim currentMemberJson As AddMemberToGroupJson = New AddMemberToGroupJson
+                currentMemberJson.Entity = currentEntity
+                memberList.Add(currentMemberJson)
+            Next
+
+            Dim groupMemberJson As AddMembersToGroupWithGroupJson = New AddMembersToGroupWithGroupJson
+            With groupMemberJson
+                .MembersList = memberList
+                .RoomId = workspaceRoomId
+                .GroupName = groupName
+            End With
+
+            Dim result As String = workspaces.AddMembersToGroupV30(groupMemberJson)
+
+        End Sub
+
+        Private Sub DownloadFileById(ByVal docId As String, ByVal roomId As Integer, ByVal destinationPath As String, ByVal lastUpdateTime As Date)
+            ' Get an instance of DownloadManager            
+            Dim downloadManager As DownloadManager = apiSession.GetDownloadManager()
+            ' A call to the DownloadFileById            
+            downloadManager.DownloadFileById(docId, String.Empty, roomId, destinationPath, lastUpdateTime, True, True)
+        End Sub
+
+        Private Sub DownloadFileByName(ByVal roomId As Integer, ByVal folderPath As String, ByVal docName As String, ByVal destinationPath As String, ByVal lastUpdateTime As Date)
+            ' Get an instance of DownloadManager    
+            Dim downloadManager As DownloadManager = apiSession.GetDownloadManager()
+            ' A call to the DownloadFileByName            
+            downloadManager.DownloadFileByName(roomId, folderPath, docName, destinationPath, lastUpdateTime)
+        End Sub
+
+        Private Sub DownloadFileToBuffer(ByVal docId As String)
+            ' Get an instance of DownloadManager            
+            Dim downloadManager As DownloadManager = apiSession.GetDownloadManager()
+            ' A call to the DownloadFileToBuffer            
+            Dim buffer As Byte() = downloadManager.DownloadFileToBuffer(docId, DownloadTypes.ORIGINAL)
+        End Sub
+
+        Private Sub GetFile(ByVal roomId As Integer)
+            Dim workspaces As Resource.Workspaces = apiSession.GetWorkspacesResource()
+            ' Create an object to specify the details of what documents to list and how            
+            ' they are returned. A few options are shown here.            
+            Dim selectionJson As ListDocumentsVdrJson = New ListDocumentsVdrJson
+            With selectionJson
+                .OrderAscending = False
+                .FolderPath = "/"
+            End With
+            ' Call the list method            
+            Dim response As PagingItemListJson(Of BaseJson) = workspaces.ListDocumentsV30(roomId, selectionJson)
+        End Sub
+
 
     End Module
 End Namespace

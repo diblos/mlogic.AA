@@ -21,6 +21,8 @@ Namespace MassLogicConsole
 
         Public Property WatchdoxFileContent() As String
 
+        Public Property WatchdoxTargetFilename() As String
+
         Public Sub New(absolutePath As String, fileName As String, VSNfromFilename As String, dateTimeFromFilename As String)
             Me.absolutePath = absolutePath
             Me.fileName = fileName
