@@ -23,7 +23,7 @@ Namespace MassLogicConsole
 
         Public Property Username() As String
 
-        Private Const FILENAME_DELIMITER As String = "/"
+        Private Const FILENAME_DELIMITER As String = ","
 
         Public Sub New(absolutePath As String, fileName As String, VSNfromFilename As String, dateTimeFromFilename As String)
             Me.absolutePath = absolutePath
@@ -40,7 +40,7 @@ Namespace MassLogicConsole
 
         Public Function getDstFilename() As String
             'Return Me.dstFilename
-            Return Me.OISVersion & FILENAME_DELIMITER & Me.platformName & FILENAME_DELIMITER & Me.Username
+            Return Me.OISVersion & FILENAME_DELIMITER & Me.platformName & FILENAME_DELIMITER & Me.Username & ".txt"
         End Function
 
         Public Function getVSNfromFilename() As String

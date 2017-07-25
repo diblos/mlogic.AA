@@ -18,6 +18,11 @@ Imports System.Data.OleDb 'For Excel
 Namespace MassLogicConsole
     Module Module1
 
+        Public Enum ModuleResult
+            FAIL = 0
+            OK = 1
+        End Enum
+
         Private Const DateStr As String = "yyyy-MM-dd HH:mm"
         Private Const driveLetter As String = "C:\\"
         Private Const dirPathXML As String = "C:\Airbus\LPC-NG\report"
@@ -25,7 +30,7 @@ Namespace MassLogicConsole
         Private Const filenameSplitChar As Char = "-"c
         Private Const numberOfSplits As Integer = 4
         Private Const WORKSPACE_ROOM_ID_ONE As Integer = 339569
-        Private Const WORKSPACE_ROOM_ID_TWO As Integer = 340450
+        Private Const WORKSPACE_ROOM_ID_TWO As Integer = WORKSPACE_ROOM_ID_ONE '340450
         Private Const certFilename As String = "MassLogicCert.pfx"
         Private Const certPassword As String = "masslogicshukor"
         Private Const workspaceServerUrl As String = "shukor.watchdox.com"
@@ -34,7 +39,7 @@ Namespace MassLogicConsole
         Private Const serviceAccountIssuerName As String = "com.watchdox.system.0367.3855"
         Private Const tokenExpiresInMinutes As Integer = 5
 
-        Private Const ExcelFilename As String = "text_excel.xlsx"
+        Private Const ExcelFilename As String = "text_excel.xls" ' xls is OK, xlsx need to be checked
         Private Const ExcelWorkspace As String = "Sheet1"
 
 
@@ -65,12 +70,11 @@ Namespace MassLogicConsole
             getVolumeSerialNumber()
             generateReportFiles(dirPathXML, extToSearch)
             parseReportFile()
-            generateStringReportFile()
-
-            'ReadExcel(ExcelFilename, ExcelWorkspace)
-            'Dim dt As DataTable = ReadExcelToTable(ExcelFilename)
-
             Dim text As String = authenticateAndGetToken(apiSession)
+            'MAP SERIAL WITH USERNAME START
+            MapWithUsername()
+            'MAP SERIAL WITH USERNAME END
+            generateStringReportFile(True) 'Default without username entry in file content 
 
             'GetWorkspace()
             'GetFolder()
@@ -92,6 +96,33 @@ Namespace MassLogicConsole
             Console.WriteLine(r)
         End Sub
 
+        Private Sub MapWithUsername()
+            
+            Try
+                Try
+                    File.Delete(ExcelFilename) 'delete local copy excel file
+                Catch ex As Exception
+
+                End Try
+
+                If DownloadFileByName(WORKSPACE_ROOM_ID_ONE, "/", ExcelFilename, Path.Combine(LocalDir, ExcelFilename), Now) = ModuleResult.OK Then
+
+                    'ReadExcel(ExcelFilename, ExcelWorkspace)
+                    Dim dt As DataTable = ReadExcelToTable(ExcelFilename)
+                    If dt.Rows.Count > 0 Then
+                        For Each current As ReportFile In liReportFile
+                            Dim foundRows As DataRow()
+                            foundRows = dt.Select("F1='" & current.platformName & "'")
+                            current.Username = foundRows(0).Item("F2")
+                        Next
+                    End If
+                End If
+
+            Catch ex As Exception
+
+            End Try
+        End Sub
+
         Private Sub ReadExcel(ByVal fn As String, ByVal ws As String)
 
             'Dim fileName = String.Format("{0}\fileNameHere", Directory.GetCurrentDirectory())
@@ -110,9 +141,9 @@ Namespace MassLogicConsole
         Private Function ReadExcelToTable(path As String) As DataTable
 
             'CONNECTION STRING
-            Dim connstring As String = (Convert.ToString("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=") & path) + ";Extended Properties='Excel 8.0;HDR=NO;IMEX=1';"
+            'Dim connstring As String = (Convert.ToString("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=") & path) + ";Extended Properties='Excel 8.0;HDR=NO;IMEX=1';"
             'THE SAME NAME 
-            'Dim connstring As String = (Convert.ToString("Provider=Microsoft.JET.OLEDB.4.0;Data Source=") & path) + ";Extended Properties='Excel 8.0;HDR=NO;IMEX=1';"
+            Dim connstring As String = (Convert.ToString("Provider=Microsoft.JET.OLEDB.4.0;Data Source=") & path) + ";Extended Properties='Excel 8.0;HDR=NO;IMEX=1';"
 
             Using conn As New OleDbConnection(connstring)
                 conn.Open()
@@ -143,6 +174,12 @@ Namespace MassLogicConsole
             End With
             workspaces.CreateFoldersTreeV30(x)
         End Sub
+
+        Private Function LocalDir() As String
+            Dim P As String = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase)
+            P = New Uri(P).LocalPath
+            Return P
+        End Function
 
         Private Sub getVolumeSerialNumber()
             Dim num As UInteger = 0UI
@@ -211,7 +248,7 @@ Namespace MassLogicConsole
             Next
         End Sub
 
-        Private Sub generateStringReportFile()
+        Private Sub generateStringReportFile(Optional ByVal withUsername As Boolean = False)
             For Each current As ReportFile In liReportFile
                 Dim stringBuilder As StringBuilder = New StringBuilder()
                 stringBuilder.Append("DateTime:")
@@ -226,6 +263,11 @@ Namespace MassLogicConsole
                 stringBuilder.Append("PlatformType:")
                 stringBuilder.Append(current.platformType)
                 stringBuilder.Append(Environment.NewLine)
+                If withUsername Then
+                    stringBuilder.Append("Username:")
+                    stringBuilder.Append(current.Username)
+                    stringBuilder.Append(Environment.NewLine)
+                End If
                 current.WatchdoxFileContent = stringBuilder.ToString()
             Next
         End Sub
@@ -396,16 +438,18 @@ Namespace MassLogicConsole
             End Try
         End Sub
 
-        Private Sub DownloadFileByName(ByVal roomId As Integer, ByVal folderPath As String, ByVal docName As String, ByVal destinationPath As String, ByVal lastUpdateTime As Date)
+        Private Function DownloadFileByName(ByVal roomId As Integer, ByVal folderPath As String, ByVal docName As String, ByVal destinationPath As String, ByVal lastUpdateTime As Date) As ModuleResult
             Try
                 ' Get an instance of DownloadManager    
                 Dim downloadManager As DownloadManager = apiSession.GetDownloadManager()
                 ' A call to the DownloadFileByName            
                 downloadManager.DownloadFileByName(roomId, folderPath, docName, destinationPath, lastUpdateTime)
+                Return ModuleResult.OK
             Catch ex As Exception
                 Console.WriteLine(ex.Message)
+                Return ModuleResult.FAIL
             End Try
-        End Sub
+        End Function
 
         Private Sub DownloadFileToBuffer(ByVal docId As String)
             Try
