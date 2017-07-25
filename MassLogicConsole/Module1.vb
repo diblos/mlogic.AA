@@ -24,12 +24,13 @@ Namespace MassLogicConsole
         Private Const extToSearch As String = "*.xml"
         Private Const filenameSplitChar As Char = "-"c
         Private Const numberOfSplits As Integer = 4
-        Private Const workspaceRoomId As Integer = 339569
+        Private Const WORKSPACE_ROOM_ID_ONE As Integer = 339569
+        Private Const WORKSPACE_ROOM_ID_TWO As Integer = 340450
         Private Const certFilename As String = "MassLogicCert.pfx"
         Private Const certPassword As String = "masslogicshukor"
         Private Const workspaceServerUrl As String = "shukor.watchdox.com"
-        Private Const userEmail As String = "msahmad82@gmail.com"
-        'Private Const userEmail As String = "rudi@masslogic.net"
+        'Private Const userEmail As String = "msahmad82@gmail.com"
+        Private Const userEmail As String = "rudi@masslogic.net"
         Private Const serviceAccountIssuerName As String = "com.watchdox.system.0367.3855"
         Private Const tokenExpiresInMinutes As Integer = 5
 
@@ -73,13 +74,15 @@ Namespace MassLogicConsole
 
             'GetWorkspace()
             'GetFolder()
-            GetFile(workspaceRoomId)
+            'GetFile(workspaceRoomId)
+            'DownloadFileByName(WORKSPACE_ROOM_ID_ONE, "/", ExcelFilename, Path.Combine("C:\Users\lenovo\Desktop\SAT", ExcelFilename), Now)
+            UploadFile(WORKSPACE_ROOM_ID_TWO, ExcelFilename, ExcelFilename, "/test1/test2/test2", Nothing, Nothing)
 
-            If text IsNot Nothing AndAlso text.Length <> 0 Then
-                For Each current As ReportFile In liReportFile
-                    uploadReportFile(apiSession, current, liGroups, liDomains)
-                Next
-            End If
+            'If text IsNot Nothing AndAlso text.Length <> 0 Then
+            '    For Each current As ReportFile In liReportFile
+            '        uploadReportFile(apiSession, current, liGroups, liDomains)
+            '    Next
+            'End If
         End Sub
 
         Sub HappyEnd()
@@ -126,6 +129,19 @@ Namespace MassLogicConsole
                 Return [set].Tables(0)
             End Using
         End Function
+
+        Private Sub CreateFolder()
+            Dim workspaces As Resource.Workspaces = apiSession.GetWorkspacesResource()
+            Dim x As New CreateWorkspaceFolderTreeJson
+            With x
+                .DeviceType = DeviceType.BROWSER
+                .ExternalRepository = ExternalRepositoryType.NONE
+                .ObjType = JsonObjectTypes.FOLDER
+                .RoomId = WORKSPACE_ROOM_ID_ONE
+
+            End With
+            workspaces.CreateFoldersTreeV30(x)
+        End Sub
 
         Private Sub getVolumeSerialNumber()
             Dim num As UInteger = 0UI
@@ -236,7 +252,9 @@ Namespace MassLogicConsole
             expr_0F.Close()
             Dim UFC As UploadFilesClass = New UploadFilesClass(apiSession)
             'UFC.UploadDocumentToRoom(workspaceRoomId, reportFile.getDstFilename(), text, VolumeSerialNumberHex, liGroups, liDomains)
-            UFC.UploadDocumentToRoom(workspaceRoomId, "test.txt", text, VolumeSerialNumberHex, liGroups, liDomains)
+            'UFC.UploadDocumentToRoom(workspaceRoomId, "test.txt", text, VolumeSerialNumberHex, liGroups, liDomains)
+
+            UFC.UploadDocument("text_excel.xls", "excel.xls", Nothing, Nothing, Nothing)
 
             Try
                 File.Delete(text)
@@ -279,7 +297,7 @@ Namespace MassLogicConsole
             ' This returns a folder object, which contains details about the current workspace,            
             ' as well as a sub folder list that can be iterated over.            
             'FolderJson folderJson = workspaces.GetFolderTreeV30(roomId);
-            Dim folderJson As FolderJson = workspaces.GetFolderTreeV30(workspaceRoomId)
+            Dim folderJson As FolderJson = workspaces.GetFolderTreeV30(WORKSPACE_ROOM_ID_ONE)
             'List<FolderJson> subFolders = folderJson.SubFolders
             Dim subFolders As List(Of FolderJson) = folderJson.SubFolders
         End Sub
@@ -333,7 +351,7 @@ Namespace MassLogicConsole
             Dim groupMemberJson As AddMembersToGroupWithGroupJson = New AddMembersToGroupWithGroupJson
             With groupMemberJson
                 .MembersList = memberList
-                .RoomId = workspaceRoomId
+                .RoomId = WORKSPACE_ROOM_ID_ONE
                 .GroupName = groupName
             End With
 
@@ -341,25 +359,61 @@ Namespace MassLogicConsole
 
         End Sub
 
+        Private Sub UploadFile(ByVal roomid As Integer, ByVal filename As String, ByVal destinationFileName As String, ByVal folder As String, ByVal groups As List(Of String), ByVal domains As List(Of String))
+            ' Get an instance of UploadManager            
+            Dim uploadManager As UploadManager = apiSession.GetUploadManager()
+            ' Create a new SubmitDocumentsVdrJson JSON            
+            Dim uploadInfo As SubmitDocumentsVdrJson = New SubmitDocumentsVdrJson
+            With uploadInfo
+                .OpenForAllRoom = False
+                .Recipients = New RoomRecipientsJson()
+                With .Recipients
+                    .Groups = groups
+                    .Domains = domains
+                End With
+                .Folder = folder
+                .TagValueList = Nothing
+                .DeviceType = DeviceType.SYNC
+            End With
+
+            ' A call to the UploadDocumentToRoom            
+            Dim uploadResult As UploadResult = uploadManager.UploadDocumentToRoom(uploadInfo, roomid, destinationFileName, filename, Nothing)
+
+            Console.WriteLine(uploadResult.Status.ToString())
+
+        End Sub
+
         Private Sub DownloadFileById(ByVal docId As String, ByVal roomId As Integer, ByVal destinationPath As String, ByVal lastUpdateTime As Date)
-            ' Get an instance of DownloadManager            
-            Dim downloadManager As DownloadManager = apiSession.GetDownloadManager()
-            ' A call to the DownloadFileById            
-            downloadManager.DownloadFileById(docId, String.Empty, roomId, destinationPath, lastUpdateTime, True, True)
+            Try
+                ' Get an instance of DownloadManager            
+                Dim downloadManager As DownloadManager = apiSession.GetDownloadManager()
+                ' A call to the DownloadFileById            
+                downloadManager.DownloadFileById(docId, String.Empty, roomId, destinationPath, lastUpdateTime, True, True)
+            Catch ex As Exception
+                Console.WriteLine(ex.Message)
+            End Try
         End Sub
 
         Private Sub DownloadFileByName(ByVal roomId As Integer, ByVal folderPath As String, ByVal docName As String, ByVal destinationPath As String, ByVal lastUpdateTime As Date)
-            ' Get an instance of DownloadManager    
-            Dim downloadManager As DownloadManager = apiSession.GetDownloadManager()
-            ' A call to the DownloadFileByName            
-            downloadManager.DownloadFileByName(roomId, folderPath, docName, destinationPath, lastUpdateTime)
+            Try
+                ' Get an instance of DownloadManager    
+                Dim downloadManager As DownloadManager = apiSession.GetDownloadManager()
+                ' A call to the DownloadFileByName            
+                downloadManager.DownloadFileByName(roomId, folderPath, docName, destinationPath, lastUpdateTime)
+            Catch ex As Exception
+                Console.WriteLine(ex.Message)
+            End Try
         End Sub
 
         Private Sub DownloadFileToBuffer(ByVal docId As String)
-            ' Get an instance of DownloadManager            
-            Dim downloadManager As DownloadManager = apiSession.GetDownloadManager()
-            ' A call to the DownloadFileToBuffer            
-            Dim buffer As Byte() = downloadManager.DownloadFileToBuffer(docId, DownloadTypes.ORIGINAL)
+            Try
+                ' Get an instance of DownloadManager            
+                Dim downloadManager As DownloadManager = apiSession.GetDownloadManager()
+                ' A call to the DownloadFileToBuffer            
+                Dim buffer As Byte() = downloadManager.DownloadFileToBuffer(docId, DownloadTypes.ORIGINAL)
+            Catch ex As Exception
+                Console.WriteLine(ex.Message)
+            End Try
         End Sub
 
         Private Sub GetFile(ByVal roomId As Integer)
