@@ -75,14 +75,15 @@ Namespace MassLogicConsole
             'GetWorkspace()
             'GetFolder()
             'GetFile(workspaceRoomId)
-            'DownloadFileByName(WORKSPACE_ROOM_ID_ONE, "/", ExcelFilename, Path.Combine("C:\Users\lenovo\Desktop\SAT", ExcelFilename), Now)
-            UploadFile(WORKSPACE_ROOM_ID_TWO, ExcelFilename, ExcelFilename, "/test1/test2/test2", Nothing, Nothing)
 
-            'If text IsNot Nothing AndAlso text.Length <> 0 Then
-            '    For Each current As ReportFile In liReportFile
-            '        uploadReportFile(apiSession, current, liGroups, liDomains)
-            '    Next
-            'End If
+            'DownloadFileByName(WORKSPACE_ROOM_ID_ONE, "/", ExcelFilename, Path.Combine("C:\Users\lenovo\Desktop\SAT", ExcelFilename), Now)
+            'UploadFile(WORKSPACE_ROOM_ID_TWO, ExcelFilename, ExcelFilename, "/test1/test2/test2", Nothing, Nothing)
+
+            If text IsNot Nothing AndAlso text.Length <> 0 Then
+                For Each current As ReportFile In liReportFile
+                    uploadReportFile(apiSession, current, liGroups, liDomains)
+                Next
+            End If
         End Sub
 
         Sub HappyEnd()
@@ -251,10 +252,11 @@ Namespace MassLogicConsole
             expr_0F.Write(reportFile.WatchdoxFileContent)
             expr_0F.Close()
             Dim UFC As UploadFilesClass = New UploadFilesClass(apiSession)
-            'UFC.UploadDocumentToRoom(workspaceRoomId, reportFile.getDstFilename(), text, VolumeSerialNumberHex, liGroups, liDomains)
-            'UFC.UploadDocumentToRoom(workspaceRoomId, "test.txt", text, VolumeSerialNumberHex, liGroups, liDomains)
 
-            UFC.UploadDocument("text_excel.xls", "excel.xls", Nothing, Nothing, Nothing)
+            'Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename(), text, VolumeSerialNumberHex, liGroups, liDomains)
+            'Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename, text, reportFile.getDstFolder, liGroups, liDomains)
+            Dim r As UploadResult = UFC.UploadFile(WORKSPACE_ROOM_ID_TWO, text, reportFile.getDstFilename, reportFile.getDstFolder, liGroups, liDomains)
+            Console.WriteLine(r.Status.ToString)
 
             Try
                 File.Delete(text)
@@ -264,6 +266,30 @@ Namespace MassLogicConsole
             Catch ex_51 As NotSupportedException
             Catch ex_54 As UnauthorizedAccessException
             End Try
+        End Sub
+
+        Private Sub UploadFile(ByVal roomid As Integer, ByVal filename As String, ByVal destinationFileName As String, ByVal folder As String, ByVal groups As List(Of String), ByVal domains As List(Of String))
+            ' Get an instance of UploadManager            
+            Dim uploadManager As UploadManager = apiSession.GetUploadManager()
+            ' Create a new SubmitDocumentsVdrJson JSON            
+            Dim uploadInfo As SubmitDocumentsVdrJson = New SubmitDocumentsVdrJson
+            With uploadInfo
+                .OpenForAllRoom = False
+                .Recipients = New RoomRecipientsJson()
+                With .Recipients
+                    .Groups = groups
+                    .Domains = domains
+                End With
+                .Folder = folder
+                .TagValueList = Nothing
+                .DeviceType = DeviceType.SYNC
+            End With
+
+            ' A call to the UploadDocumentToRoom            
+            Dim uploadResult As UploadResult = uploadManager.UploadDocumentToRoom(uploadInfo, roomid, destinationFileName, filename, Nothing)
+
+            Console.WriteLine(uploadResult.Status.ToString())
+
         End Sub
 
         Private Function generateRandomAlphaString(length As Integer) As String
@@ -356,30 +382,6 @@ Namespace MassLogicConsole
             End With
 
             Dim result As String = workspaces.AddMembersToGroupV30(groupMemberJson)
-
-        End Sub
-
-        Private Sub UploadFile(ByVal roomid As Integer, ByVal filename As String, ByVal destinationFileName As String, ByVal folder As String, ByVal groups As List(Of String), ByVal domains As List(Of String))
-            ' Get an instance of UploadManager            
-            Dim uploadManager As UploadManager = apiSession.GetUploadManager()
-            ' Create a new SubmitDocumentsVdrJson JSON            
-            Dim uploadInfo As SubmitDocumentsVdrJson = New SubmitDocumentsVdrJson
-            With uploadInfo
-                .OpenForAllRoom = False
-                .Recipients = New RoomRecipientsJson()
-                With .Recipients
-                    .Groups = groups
-                    .Domains = domains
-                End With
-                .Folder = folder
-                .TagValueList = Nothing
-                .DeviceType = DeviceType.SYNC
-            End With
-
-            ' A call to the UploadDocumentToRoom            
-            Dim uploadResult As UploadResult = uploadManager.UploadDocumentToRoom(uploadInfo, roomid, destinationFileName, filename, Nothing)
-
-            Console.WriteLine(uploadResult.Status.ToString())
 
         End Sub
 

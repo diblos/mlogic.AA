@@ -21,7 +21,9 @@ Namespace MassLogicConsole
 
         Public Property WatchdoxFileContent() As String
 
-        Public Property WatchdoxTargetFilename() As String
+        Public Property Username() As String
+
+        Private Const FILENAME_DELIMITER As String = "/"
 
         Public Sub New(absolutePath As String, fileName As String, VSNfromFilename As String, dateTimeFromFilename As String)
             Me.absolutePath = absolutePath
@@ -29,10 +31,16 @@ Namespace MassLogicConsole
             Me.VSNfromFilename = VSNfromFilename
             Me.dateTimeFromFilename = dateTimeFromFilename
             Me.dstFilename = Me.getDstFilename(dateTimeFromFilename)
+            Me.Username = "UNKNOWN"
         End Sub
 
-        Public Function getDstFilename() As String
+        Public Function getDstFolder() As String
             Return Me.dstFilename
+        End Function
+
+        Public Function getDstFilename() As String
+            'Return Me.dstFilename
+            Return Me.OISVersion & FILENAME_DELIMITER & Me.platformName & FILENAME_DELIMITER & Me.Username
         End Function
 
         Public Function getVSNfromFilename() As String
