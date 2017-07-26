@@ -72,6 +72,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\EventsLogger.vb" />
     <Compile Include="Classes\ReportFile.vb" />
     <Compile Include="Classes\UploadFilesClass.vb" />
     <Compile Include="My Project\Application.Designer.vb">

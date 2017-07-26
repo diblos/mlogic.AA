@@ -28,13 +28,31 @@ Public Class Service1
     Public DEV_MODE As Boolean = False
     Public APP_STATUS() As ApplicationObject
 
+    Dim Logger As New EventsLogger("Application", ".")
+
     Protected Overrides Sub OnStart(ByVal args() As String)
         ' Add code here to start your service. This method should set things
         ' in motion so your service can do its work.
+        Try
+            InitAPP()
+            StartWatching()
+            Logger.WriteEvent("Applications started!")
+        Catch ex As Exception
+            Logger.WriteEvent(ex.Message)
+        End Try
+
+
     End Sub
 
     Protected Overrides Sub OnStop()
         ' Add code here to perform any tear-down necessary to stop your service.
+        Try
+            StopWatching()
+            Logger.WriteEvent("Applications stopped!")
+        Catch ex As Exception
+            Logger.WriteEvent(ex.Message)
+        End Try
+
     End Sub
 
 #Region "MassLogic Methods"
@@ -71,29 +89,264 @@ Public Class Service1
     Private liGroups As List(Of String)
     Private liDomains As List(Of String)
     Private Declare Function GetVolumeInformation Lib "kernel32.dll" Alias _
-"GetVolumeInformationA" (PathName As String, VolumeNameBuffer As StringBuilder, VolumeNameSize As UInteger, ByRef VolumeSerialNumber As UInteger, ByRef MaximumComponentLength As UInteger, ByRef FileSystemFlags As UInteger, FileSystemNameBuffer As StringBuilder, FileSystemNameSize As UInteger) As Long
+    "GetVolumeInformationA" (PathName As String, VolumeNameBuffer As StringBuilder, VolumeNameSize As UInteger, ByRef VolumeSerialNumber As UInteger, ByRef MaximumComponentLength As UInteger, ByRef FileSystemFlags As UInteger, FileSystemNameBuffer As StringBuilder, FileSystemNameSize As UInteger) As Long
+
+    Private Sub MainProcess(ByVal Filename As String)
+        VolumeSerialNumber = Nothing
+        VolumeSerialNumberHex = Nothing
+        liReportFile = New List(Of ReportFile)()
+        liGroups = New List(Of String)()
+        liDomains = New List(Of String)()
+
+        getVolumeSerialNumber()
+        generateReportFiles(dirPathXML, System.IO.Path.GetFileNameWithoutExtension(Filename))
+        parseReportFile()
+        Dim text As String = authenticateAndGetToken(apiSession)
+
+        'MAP SERIAL WITH USERNAME START
+        MapWithUsername()
+        'MAP SERIAL WITH USERNAME END
+        generateStringReportFile(True) 'Default without username entry in file content 
+
+        If text IsNot Nothing AndAlso text.Length <> 0 Then
+            For Each current As ReportFile In liReportFile
+                uploadReportFile(apiSession, current, liGroups, liDomains)
+            Next
+        End If
+    End Sub
+
+    Private Sub getVolumeSerialNumber()
+        Dim num As UInteger = 0UI
+        Dim num2 As UInteger = 0UI
+        Dim stringBuilder As StringBuilder = New StringBuilder(256)
+        Dim num3 As UInteger = 0UI
+        Dim stringBuilder2 As StringBuilder = New StringBuilder(256)
+        If GetVolumeInformation("C:\\", stringBuilder, CUInt(stringBuilder.Capacity), num, num2, num3, stringBuilder2, CUInt(stringBuilder2.Capacity)) <> 0L Then
+            VolumeSerialNumber = num.ToString()
+            If VolumeSerialNumber IsNot Nothing Then
+                Dim value As ULong = 0UL
+                ULong.TryParse(VolumeSerialNumber, value)
+                Dim bigInteger As BigInteger = New BigInteger(value)
+                VolumeSerialNumberHex = bigInteger.ToString("X")
+                VolumeSerialNumberHex = VolumeSerialNumberHex.TrimStart(New Char() {"0"c})
+                Dim length As Integer = VolumeSerialNumberHex.Length
+                If length >= 8 Then
+                    Dim arg_D5_0 As String = VolumeSerialNumberHex.Substring(length - 8, 4)
+                    Dim str As String = VolumeSerialNumberHex.Substring(length - 4, 4)
+                    VolumeSerialNumberHex = arg_D5_0 + "-" + str
+                End If
+            End If
+        End If
+    End Sub
+
+    Private Sub generateReportFiles(dirPath As String, extToSearch As String)
+        Dim files As String() = Directory.GetFiles(dirPath, extToSearch)
+        For i As Integer = 0 To files.Length - 1
+            Dim text As String = files(i)
+            Dim fileNameWithoutExtension As String = Path.GetFileNameWithoutExtension(text)
+            Dim array As String() = fileNameWithoutExtension.Split(New Char() {"-"c})
+
+            If 4 = array.Count() Then
+                Dim vSNfromFilename As String = array(0) + array(1)
+                liReportFile.Add(New ReportFile(text, fileNameWithoutExtension, vSNfromFilename, array(3)))
+            End If
+        Next
+    End Sub
+
+    Private Sub parseReportFile()
+        For Each current As ReportFile In liReportFile
+            Using xmlReader As XmlReader = xmlReader.Create(New StringReader(File.ReadAllText(current.absolutePath, Encoding.UTF8)))
+                Try
+                    If xmlReader.ReadToFollowing("ConfigurationReport") Then
+                        current.dateTimeFromContent = xmlReader.GetAttribute("DateTime")
+                    End If
+                Catch ex_53 As InvalidOperationException
+                Catch ex_56 As ArgumentException
+                End Try
+                Try
+                    If xmlReader.ReadToDescendant("Platform") Then
+                        current.platformName = xmlReader.GetAttribute("Name")
+                        current.platformType = xmlReader.GetAttribute("Type")
+                    End If
+                Catch ex_8B As InvalidOperationException
+                Catch ex_8E As ArgumentException
+                End Try
+                Try
+                    If xmlReader.ReadToFollowing("ConfigurationDescription") Then
+                        current.OISVersion = xmlReader.GetAttribute("OISVersion")
+                    End If
+                Catch ex_B2 As InvalidOperationException
+                Catch ex_B5 As ArgumentException
+                End Try
+            End Using
+        Next
+    End Sub
+
+    Private Sub MapWithUsername()
+
+        Try
+            Try
+                File.Delete(ExcelFilename) 'delete local copy excel file
+            Catch ex As Exception
+
+            End Try
+
+            If DownloadFileByName(WORKSPACE_ROOM_ID_ONE, "/", ExcelFilename, Path.Combine(LocalDir, ExcelFilename), Now) = ModuleResult.OK Then
+
+                'ReadExcel(ExcelFilename, ExcelWorkspace)
+                Dim dt As DataTable = ReadExcelToTable(ExcelFilename)
+                If dt.Rows.Count > 0 Then
+                    For Each current As ReportFile In liReportFile
+                        Dim foundRows As DataRow()
+                        foundRows = dt.Select("F1='" & current.platformName & "'")
+                        current.Username = foundRows(0).Item("F2")
+                    Next
+                End If
+            End If
+
+        Catch ex As Exception
+
+        End Try
+    End Sub
+
+    Private Function ReadExcelToTable(path As String) As DataTable
+
+        'CONNECTION STRING
+        'Dim connstring As String = (Convert.ToString("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=") & path) + ";Extended Properties='Excel 8.0;HDR=NO;IMEX=1';"
+        'THE SAME NAME 
+        Dim connstring As String = (Convert.ToString("Provider=Microsoft.JET.OLEDB.4.0;Data Source=") & path) + ";Extended Properties='Excel 8.0;HDR=NO;IMEX=1';"
+
+        Using conn As New OleDbConnection(connstring)
+            conn.Open()
+            'Get All Sheets Name
+            Dim sheetsName As DataTable = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, New Object() {Nothing, Nothing, Nothing, "Table"})
+
+            'Get the First Sheet Name
+            Dim firstSheetName As String = sheetsName.Rows(0)(2).ToString()
+
+            'Query String 
+            Dim sql As String = String.Format("SELECT * FROM [{0}]", firstSheetName)
+            Dim ada As New OleDbDataAdapter(sql, connstring)
+            Dim [set] As New DataSet()
+            ada.Fill([set])
+            Return [set].Tables(0)
+        End Using
+    End Function
+
+    Private Sub generateStringReportFile(Optional ByVal withUsername As Boolean = False)
+        For Each current As ReportFile In liReportFile
+            Dim stringBuilder As StringBuilder = New StringBuilder()
+            stringBuilder.Append("DateTime:")
+            stringBuilder.Append(current.dateTimeFromContent)
+            stringBuilder.Append(Environment.NewLine)
+            stringBuilder.Append("OISVersion:")
+            stringBuilder.Append(current.OISVersion)
+            stringBuilder.Append(Environment.NewLine)
+            stringBuilder.Append("PlatformName:")
+            stringBuilder.Append(current.platformName)
+            stringBuilder.Append(Environment.NewLine)
+            stringBuilder.Append("PlatformType:")
+            stringBuilder.Append(current.platformType)
+            stringBuilder.Append(Environment.NewLine)
+            If withUsername Then
+                stringBuilder.Append("Username:")
+                stringBuilder.Append(current.Username)
+                stringBuilder.Append(Environment.NewLine)
+            End If
+            current.WatchdoxFileContent = stringBuilder.ToString()
+        Next
+    End Sub
+
+    Private Function DownloadFileByName(ByVal roomId As Integer, ByVal folderPath As String, ByVal docName As String, ByVal destinationPath As String, ByVal lastUpdateTime As Date) As ModuleResult
+        Try
+            ' Get an instance of DownloadManager    
+            Dim downloadManager As DownloadManager = apiSession.GetDownloadManager()
+            ' A call to the DownloadFileByName            
+            downloadManager.DownloadFileByName(roomId, folderPath, docName, destinationPath, lastUpdateTime)
+            Return ModuleResult.OK
+        Catch ex As Exception
+            Console.WriteLine(ex.Message)
+            Return ModuleResult.FAIL
+        End Try
+    End Function
+
+    Private Sub uploadReportFile(ByRef apiSession As ApiSession, reportFile As ReportFile, liGroups As List(Of String), liDomains As List(Of String))
+        Dim text As String = generateRandomAlphaString(10)
+        Dim expr_0F As StreamWriter = New StreamWriter(text, True)
+        expr_0F.Write(reportFile.WatchdoxFileContent)
+        expr_0F.Close()
+        Dim UFC As UploadFilesClass = New UploadFilesClass(apiSession)
+
+        'Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename(), text, VolumeSerialNumberHex, liGroups, liDomains)
+        Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename, text, reportFile.getDstFolder, liGroups, liDomains)
+        'Dim r As UploadResult = UFC.UploadFile(WORKSPACE_ROOM_ID_TWO, text, reportFile.getDstFilename, reportFile.getDstFolder, liGroups, liDomains)
+        Console.WriteLine(r.Status.ToString)
+
+        Try
+            File.Delete(text)
+        Catch ex_48 As ArgumentException
+        Catch ex_4B As DirectoryNotFoundException
+        Catch ex_4E As IOException
+        Catch ex_51 As NotSupportedException
+        Catch ex_54 As UnauthorizedAccessException
+        End Try
+    End Sub
+
+    Private Function generateRandomAlphaString(length As Integer) As String
+        Dim stringBuilder As StringBuilder = New StringBuilder()
+        Dim random As Random = New Random()
+        While True
+            Dim arg_36_0 As Integer = 0
+            Dim expr_31 As Integer = length
+            length = expr_31 - 1
+            If arg_36_0 >= expr_31 Then
+                Exit While
+            End If
+            stringBuilder.Append("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"(random.[Next]("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".Length)))
+        End While
+        Return stringBuilder.ToString()
+    End Function
+
+    Private Function authenticateAndGetToken(ByRef apiSession As ApiSession) As String
+        Dim cert As X509Certificate2 = Nothing
+        Try
+            cert = New X509Certificate2(certFilename, certPassword, X509KeyStorageFlags.Exportable)
+        Catch ex_15 As CryptographicException
+        End Try
+        apiSession = New ApiSession(workspaceServerUrl, Nothing)
+        apiSession.GetWorkspacesResource()
+        Dim arg_47_0 As Integer = CInt(apiSession.StartSessionWithServiceAccount(userEmail, serviceAccountIssuerName, tokenExpiresInMinutes, cert))
+        Dim arg_45_0 As String = String.Empty
+        If arg_47_0 = 1 Then
+            Return apiSession.GetToken()
+        End If
+        Return Nothing
+    End Function
 
 #End Region
 
 #Region "Watcher Methods"
 
+    Private Function LocalDir() As String
+        Dim P As String = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase)
+        P = New Uri(P).LocalPath
+        Return P
+    End Function
+
     Public Sub InitAPP()
-        Dim tmpStr As String
+
         ReDim APP_STATUS(NO_OF_APP - 1)
 
         For x = 0 To NO_OF_APP - 1
-
-            'tmpStr = AppSettings("APP." & x + 1)
 
             APP_STATUS(x) = New ApplicationObject
 
             'SET APPLICATION OBJECT VALUES
             '=============================
-            'APP_STATUS(x).EXEPath = AppSettings("RESPONSE." & x + 1)
+            APP_STATUS(x).EXEPath = LocalDir()
             APP_STATUS(x).Time = Now
-            APP_STATUS(x).WatchFolder = tmpStr
-            'tmpStr = AppSettings("ARCHIVE." & x + 1)
-            APP_STATUS(x).ArchivePath = tmpStr
+            APP_STATUS(x).WatchFolder = dirPathXML
+            APP_STATUS(x).ArchivePath = dirPathXML
             APP_STATUS(x).Status = AppStatus.Active
 
         Next
@@ -166,7 +419,7 @@ Public Class Service1
             End If
         End If
 
-        If (isExtensionRight(e.FullPath, ".txt")) Then ParseFileName(e.FullPath)
+        If (isExtensionRight(e.FullPath, ".xml")) Then MainProcess(e.FullPath)
 
     End Sub
 
@@ -180,22 +433,6 @@ Public Class Service1
         End If
 
     End Function
-
-    Private Sub ParseFileName(ByVal FILENAME As String)
-        Dim tmpName = System.IO.Path.GetFileNameWithoutExtension(FILENAME)
-        Dim ServiceCode As String = tmpName.Split("_")(1)
-
-        Select Case ServiceCode
-            Case "RQCA"
-                'ReadCAFile(FILENAME)
-
-            Case "K1BTC"
-                'ReadK1File(FILENAME)
-            Case Else
-                lstMsgs("unrecognised file: " & FILENAME)
-        End Select
-
-    End Sub
 
     Private Sub lstMsgs(ByVal str As String)
         Try

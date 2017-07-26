@@ -55,6 +55,10 @@ Namespace MassLogicConsole
         'http://www.jasinskionline.com/windowsapi/ref/g/getvolumeinformation.html
 
         Sub Main()
+            Dim Logger As New EventsLogger("Application", ".")
+
+            Logger.WriteEvent("Applications started!")
+
             Console.WriteLine(Now.ToString(DateStr))
             theMain(Nothing)
             HappyEnd() 'Wait input to end
@@ -68,7 +72,10 @@ Namespace MassLogicConsole
             liDomains = New List(Of String)()
 
             getVolumeSerialNumber()
-            generateReportFiles(dirPathXML, extToSearch)
+            'generateReportFiles(dirPathXML, extToSearch)
+
+            generateReportFiles(dirPathXML, "0671-FAEA-CR-20170407_105221702.xml")
+
             parseReportFile()
             Dim text As String = authenticateAndGetToken(apiSession)
             'MAP SERIAL WITH USERNAME START
