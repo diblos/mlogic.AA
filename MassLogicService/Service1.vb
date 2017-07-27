@@ -28,7 +28,8 @@ Public Class Service1
     Public DEV_MODE As Boolean = False
     Public APP_STATUS() As ApplicationObject
 
-    Dim Logger As New EventsLogger("Application", ".")
+    'Dim Logger As New EventsLogger("Application", ".")
+    Dim Logger As New LogWriter("Application Start")
 
     Protected Overrides Sub OnStart(ByVal args() As String)
         ' Add code here to start your service. This method should set things
@@ -36,9 +37,8 @@ Public Class Service1
         Try
             InitAPP()
             StartWatching()
-            Logger.WriteEvent("Applications started!")
         Catch ex As Exception
-            Logger.WriteEvent(ex.Message)
+            Logger.LogWrite("OnStart: " & ex.Message)
         End Try
 
 
@@ -48,9 +48,10 @@ Public Class Service1
         ' Add code here to perform any tear-down necessary to stop your service.
         Try
             StopWatching()
-            Logger.WriteEvent("Applications stopped!")
         Catch ex As Exception
-            Logger.WriteEvent(ex.Message)
+            Logger.LogWrite("OnStop: " & ex.Message)
+        Finally
+            Logger.LogWrite("Applications Stop")
         End Try
 
     End Sub
@@ -69,7 +70,7 @@ Public Class Service1
     Private Const filenameSplitChar As Char = "-"c
     Private Const numberOfSplits As Integer = 4
     Private Const WORKSPACE_ROOM_ID_ONE As Integer = 339569
-    Private Const WORKSPACE_ROOM_ID_TWO As Integer = WORKSPACE_ROOM_ID_ONE '340450
+    Private Const WORKSPACE_ROOM_ID_TWO As Integer = 340450
     Private Const certFilename As String = "MassLogicCert.pfx"
     Private Const certPassword As String = "masslogicshukor"
     Private Const workspaceServerUrl As String = "shukor.watchdox.com"
@@ -99,7 +100,7 @@ Public Class Service1
         liDomains = New List(Of String)()
 
         getVolumeSerialNumber()
-        generateReportFiles(dirPathXML, System.IO.Path.GetFileNameWithoutExtension(Filename))
+        generateReportFiles(dirPathXML, System.IO.Path.GetFileNameWithoutExtension(Filename) & extToSearch.Replace("*", "")) 'FIND SPECIFIC FILE
         parseReportFile()
         Dim text As String = authenticateAndGetToken(apiSession)
 
@@ -107,6 +108,8 @@ Public Class Service1
         MapWithUsername()
         'MAP SERIAL WITH USERNAME END
         generateStringReportFile(True) 'Default without username entry in file content 
+
+        lstMsgs(liReportFile.Count)
 
         If text IsNot Nothing AndAlso text.Length <> 0 Then
             For Each current As ReportFile In liReportFile
@@ -140,6 +143,9 @@ Public Class Service1
     End Sub
 
     Private Sub generateReportFiles(dirPath As String, extToSearch As String)
+
+        lstMsgs(extToSearch)
+
         Dim files As String() = Directory.GetFiles(dirPath, extToSearch)
         For i As Integer = 0 To files.Length - 1
             Dim text As String = files(i)
@@ -186,15 +192,15 @@ Public Class Service1
 
         Try
             Try
-                File.Delete(ExcelFilename) 'delete local copy excel file
+                File.Delete(Path.Combine(LocalDir, ExcelFilename)) 'delete local copy excel file
             Catch ex As Exception
-
+                Logger.LogWrite("MapWithUsername: " & ex.Message)
             End Try
 
             If DownloadFileByName(WORKSPACE_ROOM_ID_ONE, "/", ExcelFilename, Path.Combine(LocalDir, ExcelFilename), Now) = ModuleResult.OK Then
 
                 'ReadExcel(ExcelFilename, ExcelWorkspace)
-                Dim dt As DataTable = ReadExcelToTable(ExcelFilename)
+                Dim dt As DataTable = ReadExcelToTable(Path.Combine(LocalDir, ExcelFilename))
                 If dt.Rows.Count > 0 Then
                     For Each current As ReportFile In liReportFile
                         Dim foundRows As DataRow()
@@ -205,16 +211,16 @@ Public Class Service1
             End If
 
         Catch ex As Exception
-
+            Logger.LogWrite("MapWithUsername: " & ex.Message)
         End Try
     End Sub
 
-    Private Function ReadExcelToTable(path As String) As DataTable
+    Private Function ReadExcelToTable(excelpath As String) As DataTable
 
         'CONNECTION STRING
-        'Dim connstring As String = (Convert.ToString("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=") & path) + ";Extended Properties='Excel 8.0;HDR=NO;IMEX=1';"
+        'Dim connstring As String = (Convert.ToString("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=") & excelpath) + ";Extended Properties='Excel 8.0;HDR=NO;IMEX=1';"
         'THE SAME NAME 
-        Dim connstring As String = (Convert.ToString("Provider=Microsoft.JET.OLEDB.4.0;Data Source=") & path) + ";Extended Properties='Excel 8.0;HDR=NO;IMEX=1';"
+        Dim connstring As String = (Convert.ToString("Provider=Microsoft.JET.OLEDB.4.0;Data Source=") & excelpath) + ";Extended Properties='Excel 8.0;HDR=NO;IMEX=1';"
 
         Using conn As New OleDbConnection(connstring)
             conn.Open()
@@ -265,7 +271,7 @@ Public Class Service1
             downloadManager.DownloadFileByName(roomId, folderPath, docName, destinationPath, lastUpdateTime)
             Return ModuleResult.OK
         Catch ex As Exception
-            Console.WriteLine(ex.Message)
+            Logger.LogWrite("DownloadFileByName: " & ex.Message)
             Return ModuleResult.FAIL
         End Try
     End Function
@@ -280,7 +286,7 @@ Public Class Service1
         'Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename(), text, VolumeSerialNumberHex, liGroups, liDomains)
         Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename, text, reportFile.getDstFolder, liGroups, liDomains)
         'Dim r As UploadResult = UFC.UploadFile(WORKSPACE_ROOM_ID_TWO, text, reportFile.getDstFilename, reportFile.getDstFolder, liGroups, liDomains)
-        Console.WriteLine(r.Status.ToString)
+        Logger.LogWrite(r.Status.ToString)
 
         Try
             File.Delete(text)
@@ -310,8 +316,11 @@ Public Class Service1
     Private Function authenticateAndGetToken(ByRef apiSession As ApiSession) As String
         Dim cert As X509Certificate2 = Nothing
         Try
-            cert = New X509Certificate2(certFilename, certPassword, X509KeyStorageFlags.Exportable)
+            'Logger.LogWrite("authenticateAndGetToken: " & certFilename & "|" & certPassword)
+            'cert = New X509Certificate2(certFilename, certPassword, X509KeyStorageFlags.Exportable)
+            cert = New X509Certificate2(Path.Combine(LocalDir, certFilename), certPassword, X509KeyStorageFlags.Exportable)
         Catch ex_15 As CryptographicException
+            Logger.LogWrite("authenticateAndGetToken: " & ex_15.Message)
         End Try
         apiSession = New ApiSession(workspaceServerUrl, Nothing)
         apiSession.GetWorkspacesResource()
@@ -414,7 +423,7 @@ Public Class Service1
                     System.IO.FileSystemEventArgs)
         If e.ChangeType = IO.WatcherChangeTypes.Changed Then
             If DEV_MODE = True Then
-                lstMsgs(Now.ToString("yyyy-MM-dd HH:mm:ss") & " File " & Path.GetFileName(e.FullPath) & _
+                lstMsgs("logchange: File " & Path.GetFileName(e.FullPath) & _
                         " has been arrived")
             End If
         End If
@@ -436,7 +445,7 @@ Public Class Service1
 
     Private Sub lstMsgs(ByVal str As String)
         Try
-
+            Logger.LogWrite(str)
         Catch ex As Exception
 
         End Try
