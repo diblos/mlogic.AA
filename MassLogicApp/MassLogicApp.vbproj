@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{3da0910d-b6c6-4840-b4c4-00331884be3d}</ProjectGuid>
+    <ProjectGuid>{3DA0910D-B6C6-4840-B4C4-00331884BE3D}</ProjectGuid>
     <OutputType>AppContainerExe</OutputType>
     <RootNamespace>MassLogicApp</RootNamespace>
     <AssemblyName>MassLogicApp</AssemblyName>
@@ -13,9 +13,9 @@
     <MinimumVisualStudioVersion>12</MinimumVisualStudioVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{BC8A1FFA-BEE3-4634-8014-F334798102B3};{F184B08F-C81C-45F6-A57F-5ABD9991F28F}</ProjectTypeGuids>
-    
     <PackageCertificateKeyFile>MassLogicApp_TemporaryKey.pfx</PackageCertificateKeyFile>
-    
+    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <AppxBundlePlatforms>neutral</AppxBundlePlatforms>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -124,21 +124,19 @@
     <Compile Include="MainPage.xaml.vb">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="My Project\AssemblyInfo.vb"/>
+    <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    
     <None Include="MassLogicApp_TemporaryKey.pfx" />
-    
   </ItemGroup>
   <ItemGroup>
-  <Content Include="Assets\Logo.scale-100.png" />
-  <Content Include="Assets\SmallLogo.scale-100.png" />
-  <Content Include="Assets\SplashScreen.scale-100.png" />
-  <Content Include="Assets\StoreLogo.scale-100.png" />
+    <Content Include="Assets\Logo.scale-100.png" />
+    <Content Include="Assets\SmallLogo.scale-100.png" />
+    <Content Include="Assets\SplashScreen.scale-100.png" />
+    <Content Include="Assets\StoreLogo.scale-100.png" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -161,7 +159,7 @@
     <Import Include="System.IO" />
     <Import Include="System.Linq" />
     <Import Include="System.Runtime.CompilerServices" />
-    <Import Include="System.Runtime.InteropServices.WindowsRuntime"/>
+    <Import Include="System.Runtime.InteropServices.WindowsRuntime" />
     <Import Include="System.Threading.Tasks" />
     <Import Include="System.Windows.Input" />
     <Import Include="System.Xml.Linq" />

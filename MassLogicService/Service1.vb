@@ -70,7 +70,7 @@ Public Class Service1
     Private Const filenameSplitChar As Char = "-"c
     Private Const numberOfSplits As Integer = 4
     Private Const WORKSPACE_ROOM_ID_ONE As Integer = 339569
-    Private Const WORKSPACE_ROOM_ID_TWO As Integer = 340450
+    Private Const WORKSPACE_ROOM_ID_TWO As Integer = WORKSPACE_ROOM_ID_ONE '340450
     Private Const certFilename As String = "MassLogicCert.pfx"
     Private Const certPassword As String = "masslogicshukor"
     Private Const workspaceServerUrl As String = "shukor.watchdox.com"

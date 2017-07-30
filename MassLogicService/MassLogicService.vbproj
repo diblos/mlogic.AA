@@ -50,6 +50,10 @@
     <Reference Include="BlackBerryWorkspacesSDK">
       <HintPath>..\..\..\..\Desktop\workspace\MassLogic\MassLogicAirAsia\BlackBerryWorkspacesSDK.dll</HintPath>
     </Reference>
+    <Reference Include="EPPlus">
+      <HintPath>..\..\..\..\Desktop\workspace\DLL\EPPlus.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Data" />
@@ -73,9 +77,12 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\LogWriter.vb" />
-    <Compile Include="Classes\ReportFile.vb" />
-    <Compile Include="Classes\UploadFilesClass.vb" />
+    <Compile Include="Modules\EmbeddedAssembly.vb" />
+    <Compile Include="Modules\EPPlusClass.vb" />
+    <Compile Include="Modules\LogWriter.vb" />
+    <Compile Include="Modules\Program.vb" />
+    <Compile Include="Modules\ReportFile.vb" />
+    <Compile Include="Modules\UploadFilesClass.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
       <DependentUpon>Application.myapp</DependentUpon>
@@ -129,6 +136,9 @@
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DLL\EPPlus.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

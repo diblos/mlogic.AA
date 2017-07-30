@@ -49,6 +49,11 @@
   <ItemGroup>
     <Reference Include="BlackBerryWorkspacesSDK">
       <HintPath>..\..\..\..\Desktop\workspace\MassLogic\MassLogicAirAsia\BlackBerryWorkspacesSDK.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EPPlus">
+      <HintPath>..\..\..\..\Desktop\workspace\DLL\EPPlus.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -71,7 +76,9 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EventsLogger.vb" />
+    <Compile Include="Modules\EmbeddedAssembly.vb" />
+    <Compile Include="Modules\EPPlusClass.vb" />
+    <Compile Include="Modules\EventsLogger.vb" />
     <Compile Include="Module1.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
@@ -88,8 +95,9 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="ReportFile.vb" />
-    <Compile Include="UploadFilesClass.vb" />
+    <Compile Include="Modules\Program.vb" />
+    <Compile Include="Modules\ReportFile.vb" />
+    <Compile Include="Modules\UploadFilesClass.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">
@@ -119,6 +127,9 @@
     <None Include="text_excel.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DLL\EPPlus.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -39,7 +39,7 @@ Namespace MassLogicConsole
         Private Const serviceAccountIssuerName As String = "com.watchdox.system.0367.3855"
         Private Const tokenExpiresInMinutes As Integer = 5
 
-        Private Const ExcelFilename As String = "text_excel.xls" ' xls is OK, xlsx need to be checked
+        Private Const ExcelFilename As String = "text_excel.xlsx" ' xls is OK, xlsx need to be checked
         Private Const ExcelWorkspace As String = "Sheet1"
 
 
@@ -55,12 +55,20 @@ Namespace MassLogicConsole
         'http://www.jasinskionline.com/windowsapi/ref/g/getvolumeinformation.html
 
         Sub Main()
+
+            mainLoader() 'Load Embedded Libraries
+
             Dim Logger As New EventsLogger("Application", ".")
 
             Logger.WriteEvent("Applications started!")
 
             Console.WriteLine(Now.ToString(DateStr))
+
+            'EPPlusClass.RunSample2("text_excel.xlsx")
+            'EPPlusClass.ReadExcelToTable("text_excel.xlsx")
+
             theMain(Nothing)
+
             HappyEnd() 'Wait input to end
         End Sub
 
@@ -114,8 +122,15 @@ Namespace MassLogicConsole
 
                 If DownloadFileByName(WORKSPACE_ROOM_ID_ONE, "/", ExcelFilename, Path.Combine(LocalDir, ExcelFilename), Now) = ModuleResult.OK Then
 
-                    'ReadExcel(ExcelFilename, ExcelWorkspace)
-                    Dim dt As DataTable = ReadExcelToTable(ExcelFilename)
+                    Dim dt As DataTable
+                    If Path.GetExtension(ExcelFilename) = "xls" Then
+                        'ReadExcel(ExcelFilename, ExcelWorkspace)
+                        dt = ReadExcelToTable(ExcelFilename)
+                    Else
+                        dt = EPPlusClass.ReadExcelToTable(ExcelFilename)
+                    End If
+
+
                     If dt.Rows.Count > 0 Then
                         For Each current As ReportFile In liReportFile
                             Dim foundRows As DataRow()
