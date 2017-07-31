@@ -5,10 +5,8 @@ Imports System.Security.Cryptography
 Module Program
     Sub mainLoader()
 
-        'Dim resource1 As String = "MassLogicConsole.BlackBerryWorkspacesSDK.dll"
-        Dim resource2 As String = "MassLogicConsole.EPPlus.dll"
-        'EmbeddedAssembly.Load(resource1, "BlackBerryWorkspacesSDK.dll")
-        EmbeddedAssembly.Load(resource2, "EPPlus.dll")
+        Dim resource As String = "MassLogicService.EPPlus.dll"
+        EmbeddedAssembly.Load(resource, "EPPlus.dll")
 
         AddHandler AppDomain.CurrentDomain.AssemblyResolve, AddressOf CurrentDomain_AssemblyResolve
 

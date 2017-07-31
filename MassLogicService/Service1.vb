@@ -35,6 +35,8 @@ Public Class Service1
         ' Add code here to start your service. This method should set things
         ' in motion so your service can do its work.
         Try
+            mainLoader() 'Load Embedded Libraries
+
             InitAPP()
             StartWatching()
         Catch ex As Exception
@@ -79,7 +81,7 @@ Public Class Service1
     Private Const serviceAccountIssuerName As String = "com.watchdox.system.0367.3855"
     Private Const tokenExpiresInMinutes As Integer = 5
 
-    Private Const ExcelFilename As String = "text_excel.xls" ' xls is OK, xlsx need to be checked
+    Private Const ExcelFilename As String = "text_excel.xlsx"
     Private Const ExcelWorkspace As String = "Sheet1"
 
 
@@ -199,8 +201,14 @@ Public Class Service1
 
             If DownloadFileByName(WORKSPACE_ROOM_ID_ONE, "/", ExcelFilename, Path.Combine(LocalDir, ExcelFilename), Now) = ModuleResult.OK Then
 
-                'ReadExcel(ExcelFilename, ExcelWorkspace)
-                Dim dt As DataTable = ReadExcelToTable(Path.Combine(LocalDir, ExcelFilename))
+                Dim dt As DataTable
+                If Path.GetExtension(ExcelFilename) = "xls" Then
+                    'ReadExcel(ExcelFilename, ExcelWorkspace)
+                    dt = ReadExcelToTable(Path.Combine(LocalDir, ExcelFilename))
+                Else
+                    dt = EPPlusClass.ReadExcelToTable(Path.Combine(LocalDir, ExcelFilename))
+                End If
+
                 If dt.Rows.Count > 0 Then
                     For Each current As ReportFile In liReportFile
                         Dim foundRows As DataRow()
