@@ -9,6 +9,8 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "MassLogicService", "MassLog
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "MassLogicApp", "MassLogicApp\MassLogicApp.vbproj", "{3DA0910D-B6C6-4840-B4C4-00331884BE3D}"
 EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "MassLogicLight", "MassLogicLight\MassLogicLight.vbproj", "{A5786890-791C-4621-9C01-C4A020F6A4A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -65,6 +67,16 @@ Global
 		{3DA0910D-B6C6-4840-B4C4-00331884BE3D}.Release|x86.ActiveCfg = Release|x86
 		{3DA0910D-B6C6-4840-B4C4-00331884BE3D}.Release|x86.Build.0 = Release|x86
 		{3DA0910D-B6C6-4840-B4C4-00331884BE3D}.Release|x86.Deploy.0 = Release|x86
+		{A5786890-791C-4621-9C01-C4A020F6A4A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5786890-791C-4621-9C01-C4A020F6A4A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5786890-791C-4621-9C01-C4A020F6A4A5}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{A5786890-791C-4621-9C01-C4A020F6A4A5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A5786890-791C-4621-9C01-C4A020F6A4A5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A5786890-791C-4621-9C01-C4A020F6A4A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5786890-791C-4621-9C01-C4A020F6A4A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5786890-791C-4621-9C01-C4A020F6A4A5}.Release|ARM.ActiveCfg = Release|Any CPU
+		{A5786890-791C-4621-9C01-C4A020F6A4A5}.Release|x64.ActiveCfg = Release|Any CPU
+		{A5786890-791C-4621-9C01-C4A020F6A4A5}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
