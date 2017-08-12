@@ -30,7 +30,7 @@ Namespace MassLogicConsole
         Private Const filenameSplitChar As Char = "-"c
         Private Const numberOfSplits As Integer = 4
         Private Const WORKSPACE_ROOM_ID_ONE As Integer = 339569
-        Private Const WORKSPACE_ROOM_ID_TWO As Integer = WORKSPACE_ROOM_ID_ONE '340450
+        Private Const WORKSPACE_ROOM_ID_TWO As Integer = 340450
         Private Const certFilename As String = "MassLogicCert.pfx"
         Private Const certPassword As String = "masslogicshukor"
         Private Const workspaceServerUrl As String = "shukor.watchdox.com"
@@ -42,6 +42,8 @@ Namespace MassLogicConsole
         Private Const ExcelFilename As String = "text_excel.xlsx" ' xls is OK, xlsx need to be checked
         Private Const ExcelWorkspace As String = "Sheet1"
 
+        Private Const LOGFOLDER_POSTFIX As String = "log"
+        Private Const XMLFOLDER_POSTFIX As String = "xml"
 
         Private apiSession As ApiSession
         Private VolumeSerialNumber As String
@@ -80,9 +82,9 @@ Namespace MassLogicConsole
             liDomains = New List(Of String)()
 
             getVolumeSerialNumber()
-            'generateReportFiles(dirPathXML, extToSearch)
 
-            generateReportFiles(dirPathXML, "0671-FAEA-CR-20170407_105221702.xml")
+            generateReportFiles(dirPathXML, extToSearch)
+            'generateReportFiles(dirPathXML, "0671-FAEA-CR-20170407_105221702.xml")
 
             parseReportFile()
             Dim text As String = authenticateAndGetToken(apiSession)
@@ -243,7 +245,10 @@ Namespace MassLogicConsole
 
         Private Sub parseReportFile()
             For Each current As ReportFile In liReportFile
-                Using xmlReader As XmlReader = xmlReader.Create(New StringReader(File.ReadAllText(current.absolutePath, Encoding.UTF8)))
+                Dim strReader As StringReader = New StringReader(File.ReadAllText(current.absolutePath, Encoding.UTF8))
+
+                Using xmlReader As XmlReader = xmlReader.Create(strReader)
+
                     Try
                         If xmlReader.ReadToFollowing("ConfigurationReport") Then
                             current.dateTimeFromContent = xmlReader.GetAttribute("DateTime")
@@ -266,7 +271,13 @@ Namespace MassLogicConsole
                     Catch ex_B2 As InvalidOperationException
                     Catch ex_B5 As ArgumentException
                     End Try
+
+
+
                 End Using
+
+
+
             Next
         End Sub
 
@@ -312,15 +323,19 @@ Namespace MassLogicConsole
 
         Private Sub uploadReportFile(ByRef apiSession As ApiSession, reportFile As ReportFile, liGroups As List(Of String), liDomains As List(Of String))
             Dim text As String = generateRandomAlphaString(10)
-            Dim expr_0F As StreamWriter = New StreamWriter(text, True)
-            expr_0F.Write(reportFile.WatchdoxFileContent)
-            expr_0F.Close()
+
+            Using expr_0Fx As StreamWriter = New StreamWriter(text, True)
+                expr_0Fx.Write(reportFile.WatchdoxFileContent)
+                expr_0Fx.Close()
+            End Using
+            
+
             Dim UFC As UploadFilesClass = New UploadFilesClass(apiSession)
 
-            'Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename(), text, VolumeSerialNumberHex, liGroups, liDomains)
-            Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename, text, reportFile.getDstFolder, liGroups, liDomains)
-            'Dim r As UploadResult = UFC.UploadFile(WORKSPACE_ROOM_ID_TWO, text, reportFile.getDstFilename, reportFile.getDstFolder, liGroups, liDomains)
-            Console.WriteLine(r.Status.ToString)
+            Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename, text, reportFile.getDstFolder & "_" & LOGFOLDER_POSTFIX, liGroups, liDomains)
+            Console.WriteLine("Upload log: " & r.Status.ToString)
+            Dim s As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, Path.ChangeExtension(reportFile.getDstFilename, "xml"), reportFile.absolutePath, reportFile.getDstFolder & "_" & XMLFOLDER_POSTFIX, liGroups, liDomains)
+            Console.WriteLine("Upload xml: " & s.Status.ToString)
 
             Try
                 File.Delete(text)

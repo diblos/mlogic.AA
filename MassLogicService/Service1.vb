@@ -84,6 +84,8 @@ Public Class Service1
     Private Const ExcelFilename As String = "text_excel.xlsx"
     Private Const ExcelWorkspace As String = "Sheet1"
 
+    Private Const LOGFOLDER_POSTFIX As String = "log"
+    Private Const XMLFOLDER_POSTFIX As String = "xml"
 
     Private apiSession As ApiSession
     Private VolumeSerialNumber As String
@@ -286,15 +288,19 @@ Public Class Service1
 
     Private Sub uploadReportFile(ByRef apiSession As ApiSession, reportFile As ReportFile, liGroups As List(Of String), liDomains As List(Of String))
         Dim text As String = generateRandomAlphaString(10)
-        Dim expr_0F As StreamWriter = New StreamWriter(text, True)
-        expr_0F.Write(reportFile.WatchdoxFileContent)
-        expr_0F.Close()
+
+        Using expr_0Fx As StreamWriter = New StreamWriter(text, True)
+            expr_0Fx.Write(reportFile.WatchdoxFileContent)
+            expr_0Fx.Close()
+        End Using
+
+
         Dim UFC As UploadFilesClass = New UploadFilesClass(apiSession)
 
-        'Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename(), text, VolumeSerialNumberHex, liGroups, liDomains)
-        Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename, text, reportFile.getDstFolder, liGroups, liDomains)
-        'Dim r As UploadResult = UFC.UploadFile(WORKSPACE_ROOM_ID_TWO, text, reportFile.getDstFilename, reportFile.getDstFolder, liGroups, liDomains)
-        Logger.LogWrite(r.Status.ToString)
+        Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename, text, reportFile.getDstFolder & "_" & LOGFOLDER_POSTFIX, liGroups, liDomains)
+        Logger.LogWrite("Upload log: " & r.Status.ToString)
+        Dim s As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, Path.ChangeExtension(reportFile.getDstFilename, "xml"), reportFile.absolutePath, reportFile.getDstFolder & "_" & XMLFOLDER_POSTFIX, liGroups, liDomains)
+        Logger.LogWrite("Upload xml: " & s.Status.ToString)
 
         Try
             File.Delete(text)
