@@ -84,7 +84,7 @@ Public Class Service1
     Private Const ExcelFilename As String = "text_excel.xlsx"
     Private Const ExcelWorkspace As String = "Sheet1"
 
-    Private Const LOGFOLDER_POSTFIX As String = "log"
+    Private Const LOGFOLDER_POSTFIX As String = "summary"
     Private Const XMLFOLDER_POSTFIX As String = "xml"
 
     Private apiSession As ApiSession
@@ -299,7 +299,7 @@ Public Class Service1
 
         Dim r As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, reportFile.getDstFilename, text, reportFile.getDstFolder & "_" & LOGFOLDER_POSTFIX, liGroups, liDomains)
         Logger.LogWrite("Upload log: " & r.Status.ToString)
-        Dim s As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, Path.ChangeExtension(reportFile.getDstFilename, "xml"), reportFile.absolutePath, reportFile.getDstFolder & "_" & XMLFOLDER_POSTFIX, liGroups, liDomains)
+        Dim s As UploadResult = UFC.UploadDocumentToRoom(WORKSPACE_ROOM_ID_TWO, Path.GetFileName(reportFile.absolutePath), reportFile.absolutePath, reportFile.getDstFolder & "_" & XMLFOLDER_POSTFIX, liGroups, liDomains)
         Logger.LogWrite("Upload xml: " & s.Status.ToString)
 
         Try
