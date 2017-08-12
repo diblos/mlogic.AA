@@ -11,7 +11,7 @@
     <AssemblyName>MassLogicService</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MyType>Console</MyType>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <TargetFrameworkProfile />
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>C:\Airbus\</PublishUrl>
@@ -81,10 +81,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BlackBerryWorkspacesSDK">
-      <HintPath>..\..\..\..\Desktop\workspace\MassLogic\MassLogicAirAsia\BlackBerryWorkspacesSDK.dll</HintPath>
+      <HintPath>DLL\BlackBerryWorkspacesSDK.dll</HintPath>
     </Reference>
     <Reference Include="EPPlus">
-      <HintPath>..\..\..\..\Desktop\workspace\DLL\EPPlus.dll</HintPath>
+      <HintPath>DLL\EPPlus.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -156,6 +156,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="install_svc.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="MassLogicCert.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -171,6 +174,9 @@
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
     <None Include="App.config" />
+    <None Include="uninstall_svc.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="DLL\EPPlus.dll" />
