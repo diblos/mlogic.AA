@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "MassLogicConsole", "MassLogicConsole\MassLogicConsole.vbproj", "{C8E54012-F7C5-410B-AF85-1512FDDC43A5}"
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "MassLogicService", "MassLogicService\MassLogicService.vbproj", "{ED50B254-1B0A-4A4E-B092-74FD2F4AB83A}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "MassLogicService2", "MassLogicService2\MassLogicService2.vbproj", "{2B696414-A121-402C-8AE0-05522C0610CE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,22 @@ Global
 		{ED50B254-1B0A-4A4E-B092-74FD2F4AB83A}.Release|ARM.ActiveCfg = Release|Any CPU
 		{ED50B254-1B0A-4A4E-B092-74FD2F4AB83A}.Release|x64.ActiveCfg = Release|Any CPU
 		{ED50B254-1B0A-4A4E-B092-74FD2F4AB83A}.Release|x86.ActiveCfg = Release|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Debug|ARM.Build.0 = Debug|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Debug|x64.Build.0 = Debug|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Debug|x86.Build.0 = Debug|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Release|ARM.ActiveCfg = Release|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Release|ARM.Build.0 = Release|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Release|x64.ActiveCfg = Release|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Release|x64.Build.0 = Release|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Release|x86.ActiveCfg = Release|Any CPU
+		{2B696414-A121-402C-8AE0-05522C0610CE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
